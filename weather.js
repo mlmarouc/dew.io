@@ -64,8 +64,8 @@ function splitMessage(message) {
 const SEVERITY_CLASSES = ['severity-good', 'severity-caution', 'severity-danger'];
 
 function dewSeverity(dewPoint) {
-  if (dewPoint < 65) return 'severity-good';
-  if (dewPoint < 75) return 'severity-caution';
+  if (dewPoint < 60) return 'severity-good';
+  if (dewPoint < 70) return 'severity-caution';
   return 'severity-danger';
 }
 
