@@ -48,7 +48,7 @@ body {
   flex: 1;
   width: 100%;
   max-width: 600px;
-  padding: 48px 20px;
+  padding: 72px 20px 48px;
   margin: 0 auto;
 }
 
@@ -62,11 +62,13 @@ body {
 .headline-primary {
   font-size: 40px;
   font-weight: 700;
+  color: #202936;
 }
 
 .headline-secondary {
   font-size: 32px;
   font-weight: 600;
+  color: #202936;
 }
 
 .input {
@@ -94,6 +96,7 @@ body {
   display: flex;
   flex-shrink: 0;
   color: var(--color-neutral);
+  font-size: 20px;
 }
 
 input[type="text"] {
@@ -124,6 +127,7 @@ input[type="text"]:focus {
   background-color: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
+  font-size: 16px;
 }
 
 .clear-button:hover {
@@ -138,7 +142,7 @@ input[type="text"]:focus {
   flex-shrink: 0;
   height: 52px;
   padding: 0 24px;
-  background-color: var(--color-neutral);
+  background-color: #2f3742;
   color: #ffffff;
   font-family: inherit;
   font-weight: 600;
@@ -149,7 +153,7 @@ input[type="text"]:focus {
 }
 
 .button:hover {
-  background-color: var(--color-neutral-dark);
+  background-color: #1f262f;
 }
 
 .suggestions {
@@ -206,13 +210,18 @@ input[type="text"]:focus {
   margin-bottom: 0;
 }
 
+.card-location {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
 .card-location .name {
-  font-size: 30px;
+  font-size: 22px;
   font-weight: 700;
 }
 
 .card-location .icon img {
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .card-location .desc {
@@ -249,6 +258,7 @@ img {
 .metric-icon {
   display: flex;
   color: var(--color-neutral);
+  font-size: 32px;
 }
 
 .metric-label {
@@ -329,6 +339,7 @@ img {
   border-radius: 50%;
   background-color: rgba(30, 142, 90, 0.12);
   color: var(--color-good);
+  font-size: 28px;
 }
 
 .runMessage {
