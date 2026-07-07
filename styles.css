@@ -62,13 +62,13 @@ body {
 .headline-primary {
   font-size: 40px;
   font-weight: 700;
-  color: #202936;
+  color: #f7f3ea;
 }
 
 .headline-secondary {
   font-size: 32px;
   font-weight: 600;
-  color: #202936;
+  color: #f7f3ea;
 }
 
 .input {
@@ -142,7 +142,7 @@ input[type="text"]:focus {
   flex-shrink: 0;
   height: 52px;
   padding: 0 24px;
-  background-color: #2f3742;
+  background-color: var(--color-text);
   color: #ffffff;
   font-family: inherit;
   font-weight: 600;
@@ -220,7 +220,9 @@ input[type="text"]:focus {
   font-weight: 700;
 }
 
-.card-location .icon img {
+.card-location .icon {
+  font-size: 64px;
+  color: var(--color-neutral);
   margin: 4px 0;
 }
 
@@ -228,11 +230,6 @@ input[type="text"]:focus {
   font-size: 18px;
   font-weight: 500;
   color: var(--color-text-muted);
-}
-
-img {
-  width: 80px;
-  height: auto;
 }
 
 .card-metrics {
@@ -337,9 +334,22 @@ img {
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  font-size: 28px;
+}
+
+.message-icon.severity-good {
   background-color: rgba(30, 142, 90, 0.12);
   color: var(--color-good);
-  font-size: 28px;
+}
+
+.message-icon.severity-caution {
+  background-color: rgba(201, 154, 30, 0.14);
+  color: var(--color-caution);
+}
+
+.message-icon.severity-danger {
+  background-color: rgba(192, 57, 43, 0.12);
+  color: var(--color-danger);
 }
 
 .runMessage {

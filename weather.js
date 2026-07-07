@@ -12,6 +12,7 @@ const humid = document.querySelector('.humid');
 const dew = document.querySelector('.dew');
 const dewDescriptionElement = document.querySelector('.dewDescription');
 const cardMessage = document.querySelector('.card-message');
+const messageIcon = document.querySelector('.message-icon');
 const geolocationElement = document.querySelector('.geolocation');
 const errorElement = document.querySelector('.error');
 
@@ -68,6 +69,23 @@ function dewSeverity(dewPoint) {
   return 'severity-danger';
 }
 
+// Maps OpenWeatherMap's icon codes to Google Material Symbols names.
+const WEATHER_ICON_MAP = {
+  '01d': 'sunny', '01n': 'clear_night',
+  '02d': 'partly_cloudy_day', '02n': 'partly_cloudy_night',
+  '03d': 'cloud', '03n': 'cloud',
+  '04d': 'cloud', '04n': 'cloud',
+  '09d': 'rainy', '09n': 'rainy',
+  '10d': 'rainy', '10n': 'rainy',
+  '11d': 'thunderstorm', '11n': 'thunderstorm',
+  '13d': 'ac_unit', '13n': 'ac_unit',
+  '50d': 'foggy', '50n': 'foggy',
+};
+
+function materialWeatherIcon(owmIconCode) {
+  return WEATHER_ICON_MAP[owmIconCode] || 'cloud';
+}
+
 async function fetchWeatherData(params, label) {
   errorElement.textContent = '';
   try {
@@ -100,12 +118,11 @@ async function fetchWeatherData(params, label) {
     cardMessage.classList.remove(...SEVERITY_CLASSES);
     cardMessage.classList.add(severityClass);
     runMessage.querySelector('.message-lead').classList.add(severityClass);
+    messageIcon.classList.remove(...SEVERITY_CLASSES);
+    messageIcon.classList.add(severityClass);
 
-    icon.replaceChildren();
-    const iconElement = document.createElement('img');
-    iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
-    iconElement.alt = data.weather[0].description;
-    icon.appendChild(iconElement);
+    icon.textContent = materialWeatherIcon(data.weather[0].icon);
+    icon.setAttribute('aria-label', data.weather[0].description);
 
     displayContainer.hidden = false;
     errorElement.textContent = '';
