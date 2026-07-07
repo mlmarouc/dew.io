@@ -1,5 +1,6 @@
 const form = document.querySelector('.search-form');
 const inputValue = document.querySelector('.inputValue');
+const clearButton = document.querySelector('.clear-button');
 const suggestionsList = document.querySelector('.suggestions');
 const displayContainer = document.querySelector('.display');
 const runMessage = document.querySelector('.runMessage');
@@ -9,6 +10,7 @@ const icon = document.querySelector('.icon');
 const temp = document.querySelector('.temp');
 const humid = document.querySelector('.humid');
 const dew = document.querySelector('.dew');
+const dewDescriptionElement = document.querySelector('.dewDescription');
 const geolocationElement = document.querySelector('.geolocation');
 const errorElement = document.querySelector('.error');
 
@@ -49,7 +51,15 @@ function dewPointCommentary(dewPoint) {
   return ['Deadly. Running not recommended.', "Running not recommended. It's brutally muggy out there. Save yourself."];
 }
 
-async function fetchWeatherData(params) {
+// Splits a message into its first sentence (the "lead") and the rest, so the
+// lead can be styled as a short bold heading above the supporting text.
+function splitMessage(message) {
+  const match = message.match(/^([^.!?]*[.!?])\s*([\s\S]*)$/);
+  if (!match) return [message, ''];
+  return [match[1], match[2]];
+}
+
+async function fetchWeatherData(params, label) {
   errorElement.textContent = '';
   try {
     const response = await fetch(`/api/weather?${new URLSearchParams(params)}`);
@@ -63,13 +73,17 @@ async function fetchWeatherData(params) {
     const humidValue = data.main.humidity;
     const dewPoint = calculateDewPoint(tempValue, humidValue);
     const [dewDescription, message] = dewPointCommentary(dewPoint);
+    const [messageLead, messageRest] = splitMessage(message);
 
-    cityName.textContent = capitalizeFirstLetter(data.name);
-    temp.textContent = `Temperature: ${tempValue}°F`;
+    cityName.textContent = label || capitalizeFirstLetter(data.name);
+    temp.textContent = `${tempValue}°F`;
     desc.textContent = capitalizeFirstLetters(data.weather[0].description);
-    humid.textContent = `Humidity: ${humidValue}%`;
-    dew.innerHTML = `Dew point: ${dewPoint}°<br>${dewDescription}`;
-    runMessage.textContent = message;
+    humid.textContent = `${humidValue}%`;
+    dew.textContent = `${dewPoint}°`;
+    dewDescriptionElement.textContent = dewDescription;
+    runMessage.innerHTML = messageRest
+      ? `<span class="message-lead">${messageLead}</span>${messageRest}`
+      : `<span class="message-lead">${messageLead}</span>`;
 
     icon.replaceChildren();
     const iconElement = document.createElement('img');
@@ -122,7 +136,28 @@ form.addEventListener('submit', async function (event) {
   await handleUserInput();
 });
 
+clearButton.addEventListener('click', () => {
+  inputValue.value = '';
+  clearButton.hidden = true;
+  hideSuggestions();
+  inputValue.focus();
+});
+
 // --- City autocomplete ---
+
+const US_STATE_ABBREVIATIONS = {
+  Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+  Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+  Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA',
+  Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD',
+  Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO',
+  Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+  'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH',
+  Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+  'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
+  Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY',
+  'District of Columbia': 'DC',
+};
 
 let currentSuggestions = [];
 let activeSuggestionIndex = -1;
@@ -130,6 +165,10 @@ let suggestionsAbortController = null;
 let suggestionDebounce = null;
 
 function formatSuggestion(item) {
+  if (item.country === 'US') {
+    const abbreviation = US_STATE_ABBREVIATIONS[item.state] || item.state;
+    return [item.name, abbreviation].filter(Boolean).join(', ');
+  }
   return [item.name, item.state, item.country].filter(Boolean).join(', ');
 }
 
@@ -156,9 +195,11 @@ function updateActiveSuggestion() {
 }
 
 async function selectSuggestion(item) {
-  inputValue.value = formatSuggestion(item);
+  const label = formatSuggestion(item);
+  inputValue.value = label;
+  clearButton.hidden = false;
   hideSuggestions();
-  await fetchWeatherData({ lat: item.lat, lon: item.lon });
+  await fetchWeatherData({ lat: item.lat, lon: item.lon }, label);
 }
 
 function renderSuggestions(items) {
@@ -207,6 +248,7 @@ async function fetchSuggestions(query) {
 }
 
 inputValue.addEventListener('input', () => {
+  clearButton.hidden = inputValue.value.length === 0;
   clearTimeout(suggestionDebounce);
   const query = inputValue.value.trim();
 
