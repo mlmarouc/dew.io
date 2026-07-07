@@ -1,5 +1,7 @@
 const form = document.querySelector('.search-form');
 const inputValue = document.querySelector('.inputValue');
+const suggestionsList = document.querySelector('.suggestions');
+const displayContainer = document.querySelector('.display');
 const runMessage = document.querySelector('.runMessage');
 const cityName = document.querySelector('.name');
 const desc = document.querySelector('.desc');
@@ -75,6 +77,7 @@ async function fetchWeatherData(params) {
     iconElement.alt = data.weather[0].description;
     icon.appendChild(iconElement);
 
+    displayContainer.hidden = false;
     errorElement.textContent = '';
   } catch (err) {
     console.error('Error fetching weather data:', err);
@@ -103,6 +106,7 @@ function isZipCode(query) {
 }
 
 async function handleUserInput() {
+  hideSuggestions();
   const query = inputValue.value.trim();
   if (!query) {
     errorElement.textContent = 'Please enter a city name or zip code.';
@@ -116,4 +120,125 @@ window.addEventListener('load', fetchWeatherByGeolocation);
 form.addEventListener('submit', async function (event) {
   event.preventDefault();
   await handleUserInput();
+});
+
+// --- City autocomplete ---
+
+let currentSuggestions = [];
+let activeSuggestionIndex = -1;
+let suggestionsAbortController = null;
+let suggestionDebounce = null;
+
+function formatSuggestion(item) {
+  return [item.name, item.state, item.country].filter(Boolean).join(', ');
+}
+
+function hideSuggestions() {
+  suggestionsList.hidden = true;
+  suggestionsList.replaceChildren();
+  currentSuggestions = [];
+  activeSuggestionIndex = -1;
+  inputValue.setAttribute('aria-expanded', 'false');
+  inputValue.removeAttribute('aria-activedescendant');
+}
+
+function updateActiveSuggestion() {
+  [...suggestionsList.children].forEach((li, index) => {
+    const isActive = index === activeSuggestionIndex;
+    li.setAttribute('aria-selected', String(isActive));
+    li.classList.toggle('active', isActive);
+  });
+  if (activeSuggestionIndex >= 0) {
+    inputValue.setAttribute('aria-activedescendant', `suggestion-${activeSuggestionIndex}`);
+  } else {
+    inputValue.removeAttribute('aria-activedescendant');
+  }
+}
+
+async function selectSuggestion(item) {
+  inputValue.value = formatSuggestion(item);
+  hideSuggestions();
+  await fetchWeatherData({ lat: item.lat, lon: item.lon });
+}
+
+function renderSuggestions(items) {
+  currentSuggestions = items;
+  activeSuggestionIndex = -1;
+  suggestionsList.replaceChildren();
+
+  if (items.length === 0) {
+    hideSuggestions();
+    return;
+  }
+
+  items.forEach((item, index) => {
+    const li = document.createElement('li');
+    li.id = `suggestion-${index}`;
+    li.setAttribute('role', 'option');
+    li.textContent = formatSuggestion(item);
+    li.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      selectSuggestion(item);
+    });
+    suggestionsList.appendChild(li);
+  });
+
+  suggestionsList.hidden = false;
+  inputValue.setAttribute('aria-expanded', 'true');
+}
+
+async function fetchSuggestions(query) {
+  if (suggestionsAbortController) {
+    suggestionsAbortController.abort();
+  }
+  suggestionsAbortController = new AbortController();
+
+  try {
+    const response = await fetch(`/api/geocode?${new URLSearchParams({ q: query })}`, {
+      signal: suggestionsAbortController.signal,
+    });
+    const data = await response.json();
+    renderSuggestions(Array.isArray(data) ? data : []);
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('Error fetching city suggestions:', err);
+    }
+  }
+}
+
+inputValue.addEventListener('input', () => {
+  clearTimeout(suggestionDebounce);
+  const query = inputValue.value.trim();
+
+  if (!query || query.length < 2 || /^\d+$/.test(query)) {
+    hideSuggestions();
+    return;
+  }
+
+  suggestionDebounce = setTimeout(() => fetchSuggestions(query), 300);
+});
+
+inputValue.addEventListener('keydown', (event) => {
+  if (suggestionsList.hidden) return;
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    activeSuggestionIndex = Math.min(activeSuggestionIndex + 1, currentSuggestions.length - 1);
+    updateActiveSuggestion();
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    activeSuggestionIndex = Math.max(activeSuggestionIndex - 1, 0);
+    updateActiveSuggestion();
+  } else if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+    event.preventDefault();
+    selectSuggestion(currentSuggestions[activeSuggestionIndex]);
+  } else if (event.key === 'Escape') {
+    hideSuggestions();
+  }
+});
+
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.input-group')) {
+    hideSuggestions();
+  }
 });
