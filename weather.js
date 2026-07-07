@@ -48,6 +48,7 @@ function dewPointCommentary(dewPoint) {
 }
 
 async function fetchWeatherData(params) {
+  errorElement.textContent = '';
   try {
     const response = await fetch(`/api/weather?${new URLSearchParams(params)}`);
     const data = await response.json();
