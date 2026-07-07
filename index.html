@@ -16,20 +16,39 @@
     <h1>Dew You Really Want to Run?</h1>
 
     <form class="search-form input">
-      <label for="city-input" class="visually-hidden">City or zip code</label>
-      <input type="text" id="city-input" class="inputValue" placeholder="Enter a city or zip code">
+      <div class="input-group">
+        <label for="city-input" class="visually-hidden">City or zip code</label>
+        <input
+          type="text"
+          id="city-input"
+          class="inputValue"
+          placeholder="City or zip code"
+          autocomplete="off"
+          role="combobox"
+          aria-expanded="false"
+          aria-autocomplete="list"
+          aria-controls="city-suggestions"
+        >
+        <ul id="city-suggestions" class="suggestions" role="listbox" hidden></ul>
+      </div>
       <button type="submit" class="button">Submit</button>
     </form>
     <div class="error" role="alert"></div>
 
-    <div class="display">
-      <p class="name"></p>
-      <p class="icon"></p>
-      <p class="desc"></p>
-      <p class="temp"></p>
-      <p class="humid"></p>
-      <p class="dew" aria-live="polite"></p>
-      <div class="runMessage" aria-live="polite"></div>
+    <div class="display" hidden>
+      <div class="card card-location">
+        <p class="name"></p>
+        <p class="icon"></p>
+        <p class="desc"></p>
+      </div>
+      <div class="card card-metrics">
+        <p class="temp"></p>
+        <p class="humid"></p>
+      </div>
+      <div class="card card-dew">
+        <p class="dew" aria-live="polite"></p>
+      </div>
+      <div class="card runMessage" aria-live="polite"></div>
     </div>
 
   </div>
