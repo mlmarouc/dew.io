@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dew You Really Want to Run?</title>
-    <link href="styles.css" rel="stylesheet" type="text/css">
-    <script src="weather.js" defer></script>   
-</head> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dew You Really Want to Run?</title>
+  <link href="styles.css" rel="stylesheet" type="text/css">
+  <script src="weather.js" defer></script>
+</head>
 
 <body>
 
@@ -15,24 +15,23 @@
 
     <h1>Dew You Really Want to Run?</h1>
 
-    <!-- Search a City and Error Message -->
-    <div class="input">
-      <input type="text" class="inputValue" placeholder="Enter a city">
-      <input type="submit" value="Submit" class="button">
-    </div>
-    <div class="error"></div>
+    <form class="search-form input">
+      <label for="city-input" class="visually-hidden">City or zip code</label>
+      <input type="text" id="city-input" class="inputValue" placeholder="Enter a city or zip code">
+      <button type="submit" class="button">Submit</button>
+    </form>
+    <div class="error" role="alert"></div>
 
-    <!-- Main Content -->
     <div class="display">
-        <p class="name"></p>
-        <p class="icon"></p>
-        <p class="desc"></p>
-        <p class="temp"></p>
-        <p class="humid"></p>
-        <p class="dew"></p>
-        <div class="runMessage"></div>
-    </div> 
-    
+      <p class="name"></p>
+      <p class="icon"></p>
+      <p class="desc"></p>
+      <p class="temp"></p>
+      <p class="humid"></p>
+      <p class="dew" aria-live="polite"></p>
+      <div class="runMessage" aria-live="polite"></div>
+    </div>
+
   </div>
 
   <footer class="footer">
