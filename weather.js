@@ -1,5 +1,6 @@
 const form = document.querySelector('.search-form');
 const inputValue = document.querySelector('.inputValue');
+const clearButton = document.querySelector('.clear-button');
 const suggestionsList = document.querySelector('.suggestions');
 const displayContainer = document.querySelector('.display');
 const runMessage = document.querySelector('.runMessage');
@@ -9,6 +10,9 @@ const icon = document.querySelector('.icon');
 const temp = document.querySelector('.temp');
 const humid = document.querySelector('.humid');
 const dew = document.querySelector('.dew');
+const dewDescriptionElement = document.querySelector('.dewDescription');
+const cardMessage = document.querySelector('.card-message');
+const messageIcon = document.querySelector('.message-icon');
 const geolocationElement = document.querySelector('.geolocation');
 const errorElement = document.querySelector('.error');
 
@@ -49,7 +53,40 @@ function dewPointCommentary(dewPoint) {
   return ['Deadly. Running not recommended.', "Running not recommended. It's brutally muggy out there. Save yourself."];
 }
 
-async function fetchWeatherData(params) {
+// Splits a message into its first sentence (the "lead") and the rest, so the
+// lead can be styled as a short bold heading above the supporting text.
+function splitMessage(message) {
+  const match = message.match(/^([^.!?]*[.!?])\s*([\s\S]*)$/);
+  if (!match) return [message, ''];
+  return [match[1], match[2]];
+}
+
+const SEVERITY_CLASSES = ['severity-good', 'severity-caution', 'severity-danger'];
+
+function dewSeverity(dewPoint) {
+  if (dewPoint < 65) return 'severity-good';
+  if (dewPoint < 75) return 'severity-caution';
+  return 'severity-danger';
+}
+
+// Maps OpenWeatherMap's icon codes to Google Material Symbols names.
+const WEATHER_ICON_MAP = {
+  '01d': 'sunny', '01n': 'clear_night',
+  '02d': 'partly_cloudy_day', '02n': 'partly_cloudy_night',
+  '03d': 'cloud', '03n': 'cloud',
+  '04d': 'cloud', '04n': 'cloud',
+  '09d': 'rainy', '09n': 'rainy',
+  '10d': 'rainy', '10n': 'rainy',
+  '11d': 'thunderstorm', '11n': 'thunderstorm',
+  '13d': 'ac_unit', '13n': 'ac_unit',
+  '50d': 'foggy', '50n': 'foggy',
+};
+
+function materialWeatherIcon(owmIconCode) {
+  return WEATHER_ICON_MAP[owmIconCode] || 'cloud';
+}
+
+async function fetchWeatherData(params, label) {
   errorElement.textContent = '';
   try {
     const response = await fetch(`/api/weather?${new URLSearchParams(params)}`);
@@ -63,25 +100,34 @@ async function fetchWeatherData(params) {
     const humidValue = data.main.humidity;
     const dewPoint = calculateDewPoint(tempValue, humidValue);
     const [dewDescription, message] = dewPointCommentary(dewPoint);
+    const [messageLead, messageRest] = splitMessage(message);
+    const severityClass = dewSeverity(dewPoint);
 
-    cityName.textContent = capitalizeFirstLetter(data.name);
-    temp.textContent = `Temperature: ${tempValue}°F`;
+    cityName.textContent = label || capitalizeFirstLetter(data.name);
+    temp.textContent = `${tempValue}°F`;
     desc.textContent = capitalizeFirstLetters(data.weather[0].description);
-    humid.textContent = `Humidity: ${humidValue}%`;
-    dew.innerHTML = `Dew point: ${dewPoint}°<br>${dewDescription}`;
-    runMessage.textContent = message;
+    humid.textContent = `${humidValue}%`;
+    dew.textContent = `${dewPoint}°`;
+    dewDescriptionElement.textContent = dewDescription;
+    runMessage.innerHTML = messageRest
+      ? `<span class="message-lead">${messageLead}</span>${messageRest}`
+      : `<span class="message-lead">${messageLead}</span>`;
 
-    icon.replaceChildren();
-    const iconElement = document.createElement('img');
-    iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
-    iconElement.alt = data.weather[0].description;
-    icon.appendChild(iconElement);
+    dew.classList.remove(...SEVERITY_CLASSES);
+    dew.classList.add(severityClass);
+    cardMessage.classList.remove(...SEVERITY_CLASSES);
+    cardMessage.classList.add(severityClass);
+    runMessage.querySelector('.message-lead').classList.add(severityClass);
+    messageIcon.classList.remove(...SEVERITY_CLASSES);
+    messageIcon.classList.add(severityClass);
+
+    icon.textContent = materialWeatherIcon(data.weather[0].icon);
+    icon.setAttribute('aria-label', data.weather[0].description);
 
     displayContainer.hidden = false;
     errorElement.textContent = '';
   } catch (err) {
     console.error('Error fetching weather data:', err);
-    errorElement.textContent = 'Search must be in the form of a city or a valid zip code.';
   }
 }
 
@@ -122,7 +168,28 @@ form.addEventListener('submit', async function (event) {
   await handleUserInput();
 });
 
+clearButton.addEventListener('click', () => {
+  inputValue.value = '';
+  clearButton.hidden = true;
+  hideSuggestions();
+  inputValue.focus();
+});
+
 // --- City autocomplete ---
+
+const US_STATE_ABBREVIATIONS = {
+  Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+  Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+  Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA',
+  Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD',
+  Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO',
+  Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+  'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH',
+  Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+  'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
+  Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY',
+  'District of Columbia': 'DC',
+};
 
 let currentSuggestions = [];
 let activeSuggestionIndex = -1;
@@ -130,6 +197,10 @@ let suggestionsAbortController = null;
 let suggestionDebounce = null;
 
 function formatSuggestion(item) {
+  if (item.country === 'US') {
+    const abbreviation = US_STATE_ABBREVIATIONS[item.state] || item.state;
+    return [item.name, abbreviation].filter(Boolean).join(', ');
+  }
   return [item.name, item.state, item.country].filter(Boolean).join(', ');
 }
 
@@ -156,9 +227,11 @@ function updateActiveSuggestion() {
 }
 
 async function selectSuggestion(item) {
-  inputValue.value = formatSuggestion(item);
+  const label = formatSuggestion(item);
+  inputValue.value = label;
+  clearButton.hidden = false;
   hideSuggestions();
-  await fetchWeatherData({ lat: item.lat, lon: item.lon });
+  await fetchWeatherData({ lat: item.lat, lon: item.lon }, label);
 }
 
 function renderSuggestions(items) {
@@ -207,6 +280,7 @@ async function fetchSuggestions(query) {
 }
 
 inputValue.addEventListener('input', () => {
+  clearButton.hidden = inputValue.value.length === 0;
   clearTimeout(suggestionDebounce);
   const query = inputValue.value.trim();
 
