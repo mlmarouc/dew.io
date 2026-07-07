@@ -11,6 +11,7 @@ const temp = document.querySelector('.temp');
 const humid = document.querySelector('.humid');
 const dew = document.querySelector('.dew');
 const dewDescriptionElement = document.querySelector('.dewDescription');
+const cardMessage = document.querySelector('.card-message');
 const geolocationElement = document.querySelector('.geolocation');
 const errorElement = document.querySelector('.error');
 
@@ -59,6 +60,14 @@ function splitMessage(message) {
   return [match[1], match[2]];
 }
 
+const SEVERITY_CLASSES = ['severity-good', 'severity-caution', 'severity-danger'];
+
+function dewSeverity(dewPoint) {
+  if (dewPoint < 65) return 'severity-good';
+  if (dewPoint < 75) return 'severity-caution';
+  return 'severity-danger';
+}
+
 async function fetchWeatherData(params, label) {
   errorElement.textContent = '';
   try {
@@ -74,6 +83,7 @@ async function fetchWeatherData(params, label) {
     const dewPoint = calculateDewPoint(tempValue, humidValue);
     const [dewDescription, message] = dewPointCommentary(dewPoint);
     const [messageLead, messageRest] = splitMessage(message);
+    const severityClass = dewSeverity(dewPoint);
 
     cityName.textContent = label || capitalizeFirstLetter(data.name);
     temp.textContent = `${tempValue}°F`;
@@ -85,6 +95,12 @@ async function fetchWeatherData(params, label) {
       ? `<span class="message-lead">${messageLead}</span>${messageRest}`
       : `<span class="message-lead">${messageLead}</span>`;
 
+    dew.classList.remove(...SEVERITY_CLASSES);
+    dew.classList.add(severityClass);
+    cardMessage.classList.remove(...SEVERITY_CLASSES);
+    cardMessage.classList.add(severityClass);
+    runMessage.querySelector('.message-lead').classList.add(severityClass);
+
     icon.replaceChildren();
     const iconElement = document.createElement('img');
     iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
@@ -95,7 +111,6 @@ async function fetchWeatherData(params, label) {
     errorElement.textContent = '';
   } catch (err) {
     console.error('Error fetching weather data:', err);
-    errorElement.textContent = 'Search must be in the form of a city or a valid zip code.';
   }
 }
 
