@@ -30,7 +30,7 @@ function dewPointCommentary(dewPoint) {
   } else if (dewPoint < 75) {
     return ['Uncomfortable and oppressive.', "Satan's taint. Prepare yourself. Easy runs are tough and hard runs will be like running into Mordor."];
   } else if (dewPoint < 78) {
-    return ['Danger.', "Don't Die. Run on the treadmill."];
+    return ['Danger.', "Don't die. Run on the treadmill."];
   }
   return ['Deadly.', 'You died. Continue | Load Game'];
 }
