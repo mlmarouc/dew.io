@@ -29,8 +29,8 @@ function dewPointCommentary(dewPoint) {
     return ['Unpleasant. Lots of moisture in the air.', 'Ew. Easy runs are a struggle, and hard ones are like a sauna. Sweaty spaghetti.'];
   } else if (dewPoint < 75) {
     return ['Uncomfortable and oppressive.', "Satan's taint. Prepare yourself. Easy runs are tough and hard runs will be like running into Mordor."];
-  } else if (dewPoint < 80) {
-    return ['Danger.', 'Dead. Run on the treadmill.'];
+  } else if (dewPoint < 78) {
+    return ['Danger.', "Don't Die. Run on the treadmill."];
   }
   return ['Deadly.', 'You died. Continue | Load Game'];
 }
@@ -43,12 +43,12 @@ function splitMessage(message) {
   return [match[1], match[2]];
 }
 
-const SEVERITY_CLASSES = ['severity-good', 'severity-caution', 'severity-danger'];
+const DEW_POINT_COLORS = ['green', 'yellow', 'red'];
 
-function dewSeverity(dewPoint) {
-  if (dewPoint < 60) return 'severity-good';
-  if (dewPoint < 70) return 'severity-caution';
-  return 'severity-danger';
+function dewPointColor(dewPoint) {
+  if (dewPoint < 65) return 'green';
+  if (dewPoint < 75) return 'yellow';
+  return 'red';
 }
 
 async function fetchWeatherData(params, label) {
@@ -67,7 +67,7 @@ async function fetchWeatherData(params, label) {
     const dewPoint = Math.round(data.dewPoint);
     const [dewDescription, message] = dewPointCommentary(dewPoint);
     const [messageLead, messageRest] = splitMessage(message);
-    const severityClass = dewSeverity(dewPoint);
+    const colorClass = dewPointColor(dewPoint);
 
     cityName.textContent = label || formatSuggestion({ name: data.name, state: data.state, country: data.country });
     temp.textContent = `${tempValue}°F`;
@@ -80,13 +80,13 @@ async function fetchWeatherData(params, label) {
       ? `<span class="message-lead">${messageLead}</span>${messageRest}`
       : `<span class="message-lead">${messageLead}</span>`;
 
-    dew.classList.remove(...SEVERITY_CLASSES);
-    dew.classList.add(severityClass);
-    cardMessage.classList.remove(...SEVERITY_CLASSES);
-    cardMessage.classList.add(severityClass);
-    runMessage.querySelector('.message-lead').classList.add(severityClass);
-    messageIcon.classList.remove(...SEVERITY_CLASSES);
-    messageIcon.classList.add(severityClass);
+    dew.classList.remove(...DEW_POINT_COLORS);
+    dew.classList.add(colorClass);
+    cardMessage.classList.remove(...DEW_POINT_COLORS);
+    cardMessage.classList.add(colorClass);
+    runMessage.querySelector('.message-lead').classList.add(colorClass);
+    messageIcon.classList.remove(...DEW_POINT_COLORS);
+    messageIcon.classList.add(colorClass);
 
     icon.textContent = data.icon;
     icon.setAttribute('aria-label', data.description);
@@ -102,7 +102,7 @@ async function handleUserInput() {
   hideSuggestions();
   const query = inputValue.value.trim();
   if (!query) {
-    errorElement.textContent = 'Please enter a city name or zip code.';
+    errorElement.textContent = 'Please enter a city name.';
     return;
   }
   await fetchWeatherData({ q: query });
@@ -229,7 +229,7 @@ inputValue.addEventListener('input', () => {
   clearTimeout(suggestionDebounce);
   const query = inputValue.value.trim();
 
-  if (!query || query.length < 2 || /^\d+$/.test(query)) {
+  if (!query || query.length < 2) {
     hideSuggestions();
     return;
   }
