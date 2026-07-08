@@ -38,19 +38,19 @@ function capitalizeFirstLetters(string) {
 
 function dewPointCommentary(dewPoint) {
   if (dewPoint < 55) {
-    return ['Dry. Running is unaffected.', 'Run your little heart out!'];
+    return ['Dry. Running is unaffected.', 'Run. Run like the bitch you are!'];
   } else if (dewPoint < 60) {
-    return ['Dry and comfortable.', 'Easy runs are a breeze, but hard ones might break a sweat.'];
+    return ['Dry and comfortable.', 'Easy peasy. Easy runs are a breeze, but hard ones might break a sweat.'];
   } else if (dewPoint < 65) {
-    return ['Getting sticky.', 'Easy runs are tricksy, and hard ones are a workout.'];
+    return ['Getting sticky.', 'Whew. Easy runs are tricksy, and hard ones are a workout.'];
   } else if (dewPoint < 70) {
     return ['Unpleasant. Lots of moisture in the air.', 'Ew. Easy runs are a struggle, and hard ones are like a sauna. Sweaty spaghetti.'];
   } else if (dewPoint < 75) {
-    return ['Uncomfortable and oppressive.', 'Prepare yourself. Easy runs are tough and hard runs will be like running into Mordor.'];
+    return ['Uncomfortable and oppressive.', "Satan's taint. Prepare yourself. Easy runs are tough and hard runs will be like running into Mordor."];
   } else if (dewPoint < 80) {
-    return ['Dangerous. Hard runs not recommended.', 'Danger zone! Run at your own risk.'];
+    return ['Danger.', 'Dead. Run on the treadmill.'];
   }
-  return ['Deadly. Running not recommended.', "Running not recommended. It's brutally muggy out there. Save yourself."];
+  return ['Deadly.', 'You died. Save yourself.'];
 }
 
 // Splits a message into its first sentence (the "lead") and the rest, so the
