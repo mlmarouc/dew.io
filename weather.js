@@ -50,7 +50,7 @@ function dewPointCommentary(dewPoint) {
   } else if (dewPoint < 80) {
     return ['Danger.', 'Dead. Run on the treadmill.'];
   }
-  return ['Deadly.', 'You died. Save yourself.'];
+  return ['Deadly.', 'You died. Continue | Load Game'];
 }
 
 // Splits a message into its first sentence (the "lead") and the rest, so the
