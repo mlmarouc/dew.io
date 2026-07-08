@@ -8,33 +8,15 @@ const cityName = document.querySelector('.name');
 const desc = document.querySelector('.desc');
 const icon = document.querySelector('.icon');
 const temp = document.querySelector('.temp');
+const feelsLike = document.querySelector('.feelsLike');
 const humid = document.querySelector('.humid');
 const dew = document.querySelector('.dew');
 const dewDescriptionElement = document.querySelector('.dewDescription');
 const cardMessage = document.querySelector('.card-message');
 const messageIcon = document.querySelector('.message-icon');
-const geolocationElement = document.querySelector('.geolocation');
 const errorElement = document.querySelector('.error');
 
 document.getElementById('currentYear').textContent = new Date().getFullYear();
-
-function calculateDewPoint(temperatureF, humidity) {
-  const tempC = (temperatureF - 32) * 5 / 9;
-  const a = 17.27;
-  const b = 237.7;
-  const alpha = ((a * tempC) / (b + tempC)) + Math.log(humidity / 100.0);
-  const dewPointC = (b * alpha) / (a - alpha);
-  const dewPointF = (dewPointC * 9 / 5) + 32;
-  return Math.round(dewPointF);
-}
-
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function capitalizeFirstLetters(string) {
-  return string.split(' ').map(capitalizeFirstLetter).join(' ');
-}
 
 function dewPointCommentary(dewPoint) {
   if (dewPoint < 55) {
@@ -69,43 +51,28 @@ function dewSeverity(dewPoint) {
   return 'severity-danger';
 }
 
-// Maps OpenWeatherMap's icon codes to Google Material Symbols names.
-const WEATHER_ICON_MAP = {
-  '01d': 'sunny', '01n': 'clear_night',
-  '02d': 'partly_cloudy_day', '02n': 'partly_cloudy_night',
-  '03d': 'cloud', '03n': 'cloud',
-  '04d': 'cloud', '04n': 'cloud',
-  '09d': 'rainy', '09n': 'rainy',
-  '10d': 'rainy', '10n': 'rainy',
-  '11d': 'thunderstorm', '11n': 'thunderstorm',
-  '13d': 'ac_unit', '13n': 'ac_unit',
-  '50d': 'foggy', '50n': 'foggy',
-};
-
-function materialWeatherIcon(owmIconCode) {
-  return WEATHER_ICON_MAP[owmIconCode] || 'cloud';
-}
-
 async function fetchWeatherData(params, label) {
   errorElement.textContent = '';
   try {
     const response = await fetch(`/api/weather?${new URLSearchParams(params)}`);
     const data = await response.json();
 
-    if (data.cod !== 200 && data.cod !== '200') {
-      throw new Error(data.message || 'Unknown error');
+    if (!response.ok) {
+      throw new Error(data.error || 'Unknown error');
     }
 
-    const tempValue = Math.round((data.main.temp - 273.15) * 9 / 5 + 32);
-    const humidValue = data.main.humidity;
-    const dewPoint = calculateDewPoint(tempValue, humidValue);
+    const tempValue = Math.round(data.temperature);
+    const feelsLikeValue = Math.round(data.apparentTemperature);
+    const humidValue = Math.round(data.humidity);
+    const dewPoint = Math.round(data.dewPoint);
     const [dewDescription, message] = dewPointCommentary(dewPoint);
     const [messageLead, messageRest] = splitMessage(message);
     const severityClass = dewSeverity(dewPoint);
 
-    cityName.textContent = label || capitalizeFirstLetter(data.name);
+    cityName.textContent = label || formatSuggestion({ name: data.name, state: data.state, country: data.country });
     temp.textContent = `${tempValue}°F`;
-    desc.textContent = capitalizeFirstLetters(data.weather[0].description);
+    feelsLike.textContent = `Feels like ${feelsLikeValue}°`;
+    desc.textContent = data.description;
     humid.textContent = `${humidValue}%`;
     dew.textContent = `${dewPoint}°`;
     dewDescriptionElement.textContent = dewDescription;
@@ -121,34 +88,14 @@ async function fetchWeatherData(params, label) {
     messageIcon.classList.remove(...SEVERITY_CLASSES);
     messageIcon.classList.add(severityClass);
 
-    icon.textContent = materialWeatherIcon(data.weather[0].icon);
-    icon.setAttribute('aria-label', data.weather[0].description);
+    icon.textContent = data.icon;
+    icon.setAttribute('aria-label', data.description);
 
     displayContainer.hidden = false;
     errorElement.textContent = '';
   } catch (err) {
     console.error('Error fetching weather data:', err);
   }
-}
-
-async function fetchWeatherByGeolocation() {
-  try {
-    const position = await new Promise((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
-    });
-    const { latitude, longitude } = position.coords;
-    await fetchWeatherData({ lat: latitude, lon: longitude });
-
-    if (geolocationElement) {
-      geolocationElement.textContent = `Latitude: ${latitude.toFixed(2)}, Longitude: ${longitude.toFixed(2)}`;
-    }
-  } catch (error) {
-    console.error('Error getting geolocation:', error);
-  }
-}
-
-function isZipCode(query) {
-  return /^\d{5}$/.test(query);
 }
 
 async function handleUserInput() {
@@ -158,10 +105,8 @@ async function handleUserInput() {
     errorElement.textContent = 'Please enter a city name or zip code.';
     return;
   }
-  await fetchWeatherData(isZipCode(query) ? { zip: query } : { q: query });
+  await fetchWeatherData({ q: query });
 }
-
-window.addEventListener('load', fetchWeatherByGeolocation);
 
 form.addEventListener('submit', async function (event) {
   event.preventDefault();
